@@ -32,6 +32,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
+
+#include "esp_log.h"
+
 /* LOG Functions */
 
 #ifdef __cplusplus
@@ -47,12 +51,12 @@ extern "C" {
 //#define VL53L0X_LOG_ENABLE 0
 
 enum {
-    TRACE_LEVEL_NONE,
-    TRACE_LEVEL_ERRORS,
-    TRACE_LEVEL_WARNING,
-    TRACE_LEVEL_INFO,
-    TRACE_LEVEL_DEBUG,
-    TRACE_LEVEL_ALL,
+    TRACE_LEVEL_NONE = ESP_LOG_NONE,
+    TRACE_LEVEL_ERRORS = ESP_LOG_ERROR,
+    TRACE_LEVEL_WARNING = ESP_LOG_WARN,
+    TRACE_LEVEL_INFO = ESP_LOG_INFO,
+    TRACE_LEVEL_DEBUG = ESP_LOG_DEBUG,
+    TRACE_LEVEL_ALL = ESP_LOG_VERBOSE,
     TRACE_LEVEL_IGNORE
 };
 
@@ -69,35 +73,29 @@ enum {
     TRACE_MODULE_ALL               = 0x7fffffff //all bits except sign
 };
 
+#define VL53L0X_LOG_ENABLE
 
 #ifdef VL53L0X_LOG_ENABLE
 
-#include <sys/time.h>
-
 extern uint32_t _trace_level;
-
-
+extern int _modules;
 
 int32_t VL53L0X_trace_config(char *filename, uint32_t modules, uint32_t level, uint32_t functions);
 
-void trace_print_module_function(uint32_t module, uint32_t level, uint32_t function, const char *format, ...);
+#define trace_print_module_function(module, level, function, format, ...) \
+        if (level <= LOG_LOCAL_LEVEL && (module & _modules) != 0) \
+            ESP_LOG_LEVEL(level, "VL53L0X", format, ##__VA_ARGS__)
 
-
-//extern FILE * log_file;
-
-#define LOG_GET_TIME() (int)clock()
+#define LOG_GET_TIME() esp_log_timestamp()
 
 #define _LOG_FUNCTION_START(module, fmt, ... ) \
-        trace_print_module_function(module, _trace_level, TRACE_FUNCTION_ALL, "%ld <START> %s "fmt"\n", LOG_GET_TIME(), __FUNCTION__, ##__VA_ARGS__);
+        trace_print_module_function(module, _trace_level, TRACE_FUNCTION_ALL, "%u <START> %s "fmt"\n", LOG_GET_TIME(), __FUNCTION__, ##__VA_ARGS__);
 
 #define _LOG_FUNCTION_END(module, status, ... )\
-        trace_print_module_function(module, _trace_level, TRACE_FUNCTION_ALL, "%ld <END> %s %d\n", LOG_GET_TIME(), __FUNCTION__, (int)status, ##__VA_ARGS__)
+        trace_print_module_function(module, _trace_level, TRACE_FUNCTION_ALL, "%u <END> %s %d\n", LOG_GET_TIME(), __FUNCTION__, (int)status, ##__VA_ARGS__)
 
 #define _LOG_FUNCTION_END_FMT(module, status, fmt, ... )\
-        trace_print_module_function(module, _trace_level, TRACE_FUNCTION_ALL, "%ld <END> %s %d "fmt"\n", LOG_GET_TIME(),  __FUNCTION__, (int)status,##__VA_ARGS__)
-
-// __func__ is gcc only
-//#define VL53L0X_ErrLog( fmt, ...)  fprintf(stderr, "VL53L0X_ErrLog %s" fmt "\n", __func__, ##__VA_ARGS__)
+        trace_print_module_function(module, _trace_level, TRACE_FUNCTION_ALL, "%u <END> %s %d "fmt"\n", LOG_GET_TIME(),  __FUNCTION__, (int)status,##__VA_ARGS__)
 
 #else /* VL53L0X_LOG_ENABLE no logging */
     #define VL53L0X_ErrLog(...) (void)0

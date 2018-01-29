@@ -32,7 +32,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "vl53l0x_def.h"
 #include "vl53l0x_platform_log.h"
-#include "vl53l0x_i2c_platform.h"
+
+#include "driver/i2c.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -59,9 +60,8 @@ typedef struct {
     VL53L0X_DevData_t Data;               /*!< embed ST Ewok Dev  data as "Data"*/
 
     /*!< user specific field */
-    uint8_t   I2cDevAddr;                /*!< i2c device address user specific field */
-    uint8_t   comms_type;                /*!< Type of comms : VL53L0X_COMMS_I2C or VL53L0X_COMMS_SPI */
-    uint16_t  comms_speed_khz;           /*!< Comms speed [kHz] : typically 400kHz for I2C           */
+    uint8_t   i2c_address;                /*!< i2c device address user specific field */
+    i2c_port_t i2c_port_num; // ESP32 i2c port number
 
 } VL53L0X_Dev_t;
 
@@ -98,23 +98,6 @@ typedef VL53L0X_Dev_t* VL53L0X_DEV;
  * @brief    PAL Register Access Functions
  *  @{
  */
-
-/**
- * Lock comms interface to serialize all commands to a shared I2C interface for a specific device
- * @param   Dev       Device Handle
- * @return  VL53L0X_ERROR_NONE        Success
- * @return  "Other error code"    See ::VL53L0X_Error
- */
-VL53L0X_Error VL53L0X_LockSequenceAccess(VL53L0X_DEV Dev);
-
-/**
- * Unlock comms interface to serialize all commands to a shared I2C interface for a specific device
- * @param   Dev       Device Handle
- * @return  VL53L0X_ERROR_NONE        Success
- * @return  "Other error code"    See ::VL53L0X_Error
- */
-VL53L0X_Error VL53L0X_UnlockSequenceAccess(VL53L0X_DEV Dev);
-
 
 /**
  * Writes the supplied byte buffer to the device
