@@ -79,15 +79,7 @@ VL53L0X_Error VL53L0X_ReadMulti(VL53L0X_DEV Dev, uint8_t index, uint8_t *pdata, 
     // Write register
     ESP_ERROR_CHECK(i2c_master_write_byte(cmd, index, ACK_CHECK_EN));
 
-    ESP_ERROR_CHECK(i2c_master_stop(cmd));
-    esp_err_t ret = i2c_master_cmd_begin(Dev->i2c_port_num, cmd, 1000 / portTICK_RATE_MS);
-    i2c_cmd_link_delete(cmd);
-
-    if (ret != ESP_OK)
-        return esp_to_vl53l0x_error(ret);
-
     ////// Second, read from the register
-    cmd = i2c_cmd_link_create();
     ESP_ERROR_CHECK(i2c_master_start(cmd));
 
     // Write I2C address
@@ -97,7 +89,7 @@ VL53L0X_Error VL53L0X_ReadMulti(VL53L0X_DEV Dev, uint8_t index, uint8_t *pdata, 
     ESP_ERROR_CHECK(i2c_master_read(cmd, pdata, count, I2C_MASTER_LAST_NACK));
 
     ESP_ERROR_CHECK(i2c_master_stop(cmd));
-    ret = i2c_master_cmd_begin(Dev->i2c_port_num, cmd, 1000 / portTICK_RATE_MS);
+    esp_err_t ret = i2c_master_cmd_begin(Dev->i2c_port_num, cmd, 1000 / portTICK_RATE_MS);
     i2c_cmd_link_delete(cmd);
 
     return esp_to_vl53l0x_error(ret);
